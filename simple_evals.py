@@ -324,12 +324,11 @@ def main():
         for eval_name in evals_list:
             evals[eval_name] = get_evals(eval_name, args.debug)
 
-            # try:
-            #     evals[eval_name] = get_evals(eval_name, args.debug)
-            # except Exception:
-            #     print(f"Error: eval '{eval_name}' not found.")
-            #     return
-            return
+            try:
+                evals[eval_name] = get_evals(eval_name, args.debug)
+            except Exception:
+                print(f"Error: eval '{eval_name}' not found.")
+                return
     else:
         evals = {
             eval_name: get_evals(eval_name, args.debug)
