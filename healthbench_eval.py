@@ -21,7 +21,6 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
-
 import blobfile as bf
 import numpy as np
 import pandas as pd
@@ -33,7 +32,7 @@ from .sampler.chat_completion_sampler import (
 )
 from .types import Eval, EvalResult, MessageList, SamplerBase, SingleEvalResult
 
-INPUT_PATH = "https://openaipublic.blob.core.windows.net/simple-evals/healthbench/2025-05-07-06-14-12_oss_eval.jsonl"
+INPUT_PATH = Path("simple-evals") / Path("Data") / "2025-05-07-06-14-12_oss_eval.jsonl"
 INPUT_PATH_HARD = "https://openaipublic.blob.core.windows.net/simple-evals/healthbench/hard_2025-05-08-21-00-10.jsonl"
 INPUT_PATH_CONSENSUS = "https://openaipublic.blob.core.windows.net/simple-evals/healthbench/consensus_2025-05-09-20-00-46.jsonl"
 
@@ -167,25 +166,33 @@ def get_usage_dict(response_usage) -> dict[str, int | None]:
     try:
         return {
             "input_tokens": response_usage.input_tokens,
-            "input_cached_tokens": response_usage.input_tokens_details.cached_tokens
-            if hasattr(response_usage.input_tokens_details, "cached_tokens")
-            else response_usage.input_tokens_details["cached_tokens"],
+            "input_cached_tokens": (
+                response_usage.input_tokens_details.cached_tokens
+                if hasattr(response_usage.input_tokens_details, "cached_tokens")
+                else response_usage.input_tokens_details["cached_tokens"]
+            ),
             "output_tokens": response_usage.output_tokens,
-            "output_reasoning_tokens": response_usage.output_tokens_details.reasoning_tokens
-            if hasattr(response_usage.output_tokens_details, "reasoning_tokens")
-            else response_usage.output_tokens_details["reasoning_tokens"],
+            "output_reasoning_tokens": (
+                response_usage.output_tokens_details.reasoning_tokens
+                if hasattr(response_usage.output_tokens_details, "reasoning_tokens")
+                else response_usage.output_tokens_details["reasoning_tokens"]
+            ),
             "total_tokens": response_usage.total_tokens,
         }
     except AttributeError:
         return {
             "input_tokens": response_usage.prompt_tokens,
-            "input_cached_tokens": response_usage.prompt_tokens_details.cached_tokens
-            if hasattr(response_usage.prompt_tokens_details, "cached_tokens")
-            else response_usage.prompt_tokens_details["cached_tokens"],
+            "input_cached_tokens": (
+                response_usage.prompt_tokens_details.cached_tokens
+                if hasattr(response_usage.prompt_tokens_details, "cached_tokens")
+                else response_usage.prompt_tokens_details["cached_tokens"]
+            ),
             "output_tokens": response_usage.completion_tokens,
-            "output_reasoning_tokens": response_usage.completion_tokens_details.reasoning_tokens
-            if hasattr(response_usage.completion_tokens_details, "reasoning_tokens")
-            else response_usage.completion_tokens_details["reasoning_tokens"],
+            "output_reasoning_tokens": (
+                response_usage.completion_tokens_details.reasoning_tokens
+                if hasattr(response_usage.completion_tokens_details, "reasoning_tokens")
+                else response_usage.completion_tokens_details["reasoning_tokens"]
+            ),
             "total_tokens": response_usage.total_tokens,
         }
 
@@ -275,14 +282,12 @@ class HealthBenchEval(Eval):
         subset_name: Literal["hard", "consensus"] | None = None,
     ):
         if run_reference_completions:
-            assert physician_completions_mode is not None, (
-                "physician_completions_mode must be provided if run_reference_completions is True"
-            )
+            assert (
+                physician_completions_mode is not None
+            ), "physician_completions_mode must be provided if run_reference_completions is True"
             assert PHYSICIAN_COMPLETION_MODES[physician_completions_mode][
                 "has_reference"
-            ], (
-                "physician_completions_mode must have reference completions if run_reference_completions is True"
-            )
+            ], "physician_completions_mode must have reference completions if run_reference_completions is True"
 
         if subset_name == "hard":
             input_path = INPUT_PATH_HARD
@@ -302,9 +307,9 @@ class HealthBenchEval(Eval):
         # physician completions mode
         self.physician_completions_mode = physician_completions_mode
         if self.physician_completions_mode is not None:
-            assert self.physician_completions_mode in PHYSICIAN_COMPLETION_MODES, (
-                f"Invalid physician completions mode: {self.physician_completions_mode}; must be one of {PHYSICIAN_COMPLETION_MODES.keys()}"
-            )
+            assert (
+                self.physician_completions_mode in PHYSICIAN_COMPLETION_MODES
+            ), f"Invalid physician completions mode: {self.physician_completions_mode}; must be one of {PHYSICIAN_COMPLETION_MODES.keys()}"
             # subset to only the rows which have physician completions from that group
             examples_matching_mode = [
                 example
