@@ -19,7 +19,6 @@ from .sampler.chat_completion_sampler import (
     OPENAI_SYSTEM_MESSAGE_CHATGPT,
     ChatCompletionSampler,
 )
-from .sampler.claude_sampler import ClaudeCompletionSampler, CLAUDE_SYSTEM_MESSAGE_LMSYS
 from .sampler.o_chat_completion_sampler import OChatCompletionSampler
 from .sampler.responses_sampler import ResponsesSampler
 from .simpleqa_eval import SimpleQAEval
@@ -219,18 +218,6 @@ def main():
         "gpt-4-turbo-2024-04-09_chatgpt": ChatCompletionSampler(
             model="gpt-4-turbo-2024-04-09",
             system_message=OPENAI_SYSTEM_MESSAGE_CHATGPT,
-        ),
-        # Claude models:
-        "claude-3-opus-20240229_empty": ClaudeCompletionSampler(
-            model="claude-3-opus-20240229",
-            system_message=CLAUDE_SYSTEM_MESSAGE_LMSYS,
-        ),
-        "claude-3-7-sonnet-20250219": ClaudeCompletionSampler(
-            model="claude-3-7-sonnet-20250219",
-            system_message=CLAUDE_SYSTEM_MESSAGE_LMSYS,
-        ),
-        "claude-3-haiku-20240307": ClaudeCompletionSampler(
-            model="claude-3-haiku-20240307",
         ),
     }
 
