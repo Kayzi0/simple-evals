@@ -3,7 +3,7 @@ from typing import Any
 
 import ollama
 from dotenv import load_dotenv
-from types_eval import MessageList, SamplerBase, SamplerResponse
+from ..types_eval import MessageList, SamplerBase, SamplerResponse
 
 OLLAMA_SYSTEM_MESSAGE_DEFAULT = "You are a helpful assistant."
 
