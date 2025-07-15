@@ -3,7 +3,7 @@ from typing import Any
 
 import openai
 from openai import OpenAI
-
+from dotenv import load_dotenv
 from ..types import MessageList, SamplerBase, SamplerResponse
 
 OPENAI_SYSTEM_MESSAGE_API = "You are a helpful assistant."
@@ -26,6 +26,7 @@ class ChatCompletionSampler(SamplerBase):
         max_tokens: int = 1024,
     ):
         self.api_key_name = "OPENAI_API_KEY"
+        load_dotenv()
         self.client = OpenAI()
         # using api_key=os.environ.get("OPENAI_API_KEY")  # please set your API_KEY
         self.model = model

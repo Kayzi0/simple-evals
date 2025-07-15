@@ -1,10 +1,9 @@
 import os
 import time
 from typing import Any
-
+from dotenv import load_dotenv
 import openai
 from openai import OpenAI
-
 from ..types import MessageList, SamplerBase, SamplerResponse
 
 
@@ -23,6 +22,7 @@ class ResponsesSampler(SamplerBase):
         reasoning_effort: str | None = None,
     ):
         self.api_key_name = "OPENAI_API_KEY"
+        load_dotenv()
         assert os.environ.get("OPENAI_API_KEY"), "Please set OPENAI_API_KEY"
         self.client = OpenAI()
         self.model = model
