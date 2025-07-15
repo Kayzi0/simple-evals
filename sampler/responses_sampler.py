@@ -4,7 +4,7 @@ from typing import Any
 from dotenv import load_dotenv
 import openai
 from openai import OpenAI
-from ..types import MessageList, SamplerBase, SamplerResponse
+from ..types_eval import MessageList, SamplerBase, SamplerResponse
 
 
 class ResponsesSampler(SamplerBase):
