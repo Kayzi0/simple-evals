@@ -17,6 +17,7 @@ from .sampler.chat_completion_sampler import (
 )
 from .sampler.o_chat_completion_sampler import OChatCompletionSampler
 from .sampler.responses_sampler import ResponsesSampler
+from .sampler.ollama_sampler import OllamaSampler
 
 
 def main():
@@ -56,6 +57,8 @@ def main():
     args = parser.parse_args()
 
     models = {
+        # Ollama Models
+        "qwen3": OllamaSampler(model="qwen3:4b"),
         # Reasoning Models
         "o3": ResponsesSampler(
             model="o3-2025-04-16",
