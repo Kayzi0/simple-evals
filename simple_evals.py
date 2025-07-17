@@ -323,7 +323,7 @@ def main():
             file_stem += f"_{date_str}"
             report_filename = os.path.join(tmp_dir, f"{file_stem}{debug_suffix}.html")
             print(f"Writing report to {report_filename}")
-            with open(report_filename, "w") as fh:
+            with open(report_filename, "w", encoding="utf-8") as fh:
                 fh.write(common.make_report(result))
             assert result.metrics is not None
             metrics = result.metrics | {"score": result.score}
@@ -331,14 +331,14 @@ def main():
             metrics = dict(sorted(metrics.items()))
             print(metrics)
             result_filename = os.path.join(tmp_dir, f"{file_stem}{debug_suffix}.json")
-            with open(result_filename, "w") as f:
+            with open(result_filename, "w", encoding="utf-8") as f:
                 f.write(json.dumps(metrics, indent=2))
             print(f"Writing results to {result_filename}")
 
             full_result_filename = os.path.join(
                 tmp_dir, f"{file_stem}{debug_suffix}_allresults.json"
             )
-            with open(full_result_filename, "w") as f:
+            with open(full_result_filename, "w", encoding="utf-8") as f:
                 result_dict = {
                     "score": result.score,
                     "metrics": result.metrics,
