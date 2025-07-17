@@ -15,7 +15,7 @@ import blobfile as bf
 
 from . import common
 from .healthbench_eval import GRADER_TEMPLATE, parse_json_to_dict
-from .types import Eval, EvalResult, SamplerBase, SingleEvalResult
+from .types_eval import Eval, EvalResult, SamplerBase, SingleEvalResult
 
 INPUT_PATH = (
     Path("simple-evals") / Path("Data") / "2025-05-07-06-14-12_oss_meta_eval.jsonl"
