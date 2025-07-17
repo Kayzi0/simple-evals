@@ -1,6 +1,6 @@
 import time
 from typing import Any
-
+import re
 import ollama
 from dotenv import load_dotenv
 from ..types_eval import MessageList, SamplerBase, SamplerResponse
@@ -32,6 +32,10 @@ class OllamaSampler(SamplerBase):
     def _pack_message(self, role: str, content: Any):
         return {"role": str(role), "content": content}
 
+    def _clean_think_tags(self, text: str) -> str:
+        # Remove everything between <think> and </think>, including the tags themselves
+        return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+
     def __call__(self, message_list: MessageList) -> SamplerResponse:
         if self.system_message:
             message_list = [
@@ -49,6 +53,7 @@ class OllamaSampler(SamplerBase):
                     },
                 )
                 content = response["message"]["content"]
+                content = self._clean_think_tags(content)
                 if not content:
                     raise ValueError("Ollama API returned empty response; retrying")
                 return SamplerResponse(
