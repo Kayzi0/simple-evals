@@ -33,6 +33,12 @@ def main():
         help="Select a model by name. Also accepts a comma-separated list of models.",
     )
     parser.add_argument(
+        "--grader-model",
+        type=str,
+        default="gpt-4.1",
+        help="The model to use for grading.",
+    )
+    parser.add_argument(
         "--eval",
         type=str,
         help="Select an eval by name. Also accepts a comma-separated list of evals.",
@@ -58,7 +64,7 @@ def main():
 
     models = {
         # Ollama Models
-        "qwen3": OllamaSampler(model="qwen3:4b"),
+        "qwen3": OllamaSampler(model="qwen3:4b", max_tokens=2048),
         # Reasoning Models
         "o3": ResponsesSampler(
             model="o3-2025-04-16",
@@ -235,11 +241,19 @@ def main():
 
     print(f"Running with args {args}")
 
-    grading_sampler = ChatCompletionSampler(
-        model="gpt-4.1-2025-04-14",
-        system_message=OPENAI_SYSTEM_MESSAGE_API,
-        max_tokens=2048,
-    )
+    if args.grader_model:
+        model_chosen = args.grader_model
+
+        if model_chosen not in models:
+            print(f"Error: Model '{model_name}' not found.")
+            return
+
+        grading_sampler = models[model_chosen]
+    # grading_sampler = ChatCompletionSampler(
+    #     model="gpt-4.1-2025-04-14",
+    #     system_message=OPENAI_SYSTEM_MESSAGE_API,
+    #     max_tokens=2048,
+    # )
 
     def get_evals(eval_name, debug_mode):
         num_examples = (
