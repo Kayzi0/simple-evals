@@ -65,6 +65,7 @@ def main():
     models = {
         # Ollama Models
         "qwen3": OllamaSampler(model="qwen3:4b", max_tokens=2048),
+        "llama3.2": OllamaSampler(model="llama3.2:1b", max_tokens=2048),
         # Reasoning Models
         "o3": ResponsesSampler(
             model="o3-2025-04-16",

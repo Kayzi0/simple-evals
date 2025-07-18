@@ -368,7 +368,23 @@ class HealthBenchEval(Eval):
         # construct and grade the sample
         convo_with_response = prompt + [dict(content=response_text, role="assistant")]
 
-        def grade_rubric_item(rubric_item: RubricItem) -> dict:
+        def sanitize_grading_response(text: str) -> str | None:
+            """
+            Constrains model output to just the valid json, if the json exists. Helps with models that generate
+            correct responses, but have a hard time constraining the output to just the valid json.
+            """
+            pattern = r"""
+                ```json\s*                       # opening markdown code block
+                \{\s*                            # opening brace {
+                "explanation"\s*:\s*"[^"]*",\s* # "explanation": "...",
+                "criteria_met"\s*:\s*(true|false) # "criteria_met": true/false
+                \s*\}                            # closing brace }
+                \s*```                           # closing markdown code block
+            """
+            match = re.search(pattern, text, re.IGNORECASE | re.VERBOSE)
+            return match.group(0) if match else None
+
+        def grade_rubric_item(rubric_item: RubricItem) -> tuple[dict, int]:
             convo_str = "\n\n".join(
                 [f"{m['role']}: {m['content']}" for m in convo_with_response]
             )
@@ -376,30 +392,43 @@ class HealthBenchEval(Eval):
                 "<<conversation>>", convo_str
             ).replace("<<rubric_item>>", str(rubric_item))
             messages: MessageList = [dict(content=grader_prompt, role="user")]
+            retries = 0
             while True:
                 sampler_response = self.grader_model(messages)
                 grading_response = sampler_response.response_text
-                grading_response_dict = parse_json_to_dict(grading_response)
+                grading_response_clean = sanitize_grading_response(grading_response)
+                grading_response_dict = parse_json_to_dict(
+                    grading_response_clean or grading_response
+                )
                 if "criteria_met" in grading_response_dict:
                     label = grading_response_dict["criteria_met"]
                     if label is True or label is False:
                         break
-                print("Grading failed due to bad JSON output, retrying...")
-            return grading_response_dict
 
-        grading_response_list = common.map_with_progress(
+                retries += 1
+                print("Grading failed due to bad JSON output, retrying...")
+
+            return grading_response_dict, retries
+
+        grading_results_with_retries = common.map_with_progress(
             grade_rubric_item,
             rubric_items,
-            pbar=False,
+            pbar=True,
         )
+
+        grading_response_list = [r[0] for r in grading_results_with_retries]
+        retry_counts = [r[1] for r in grading_results_with_retries]
+        total_retries = sum(retry_counts)
 
         # compute the overall score
         overall_score = calculate_score(rubric_items, grading_response_list)
         assert overall_score is not None
         metrics = {
             "overall_score": overall_score,
+            "total_retries": total_retries,
+            "avg_retries_per_rubric": total_retries / len(rubric_items),
         }
-
+        # print(metrics["total_retries"])
         # compute scores for example-level tags)
         example_tag_scores = {tag: overall_score for tag in example_tags}
         assert len(example_tag_scores) == len(example_tags)  # No duplicates.
@@ -445,7 +474,7 @@ class HealthBenchEval(Eval):
         )
         readable_explanation_str = "\n\n".join(readable_explanation_list)
         readable_explanation_str = f"\n\n{readable_explanation_str}"
-
+        # print(metrics["total_retries"])
         return metrics, readable_explanation_str, rubric_items_with_grades
 
     def __call__(self, sampler: SamplerBase) -> EvalResult:

@@ -54,6 +54,7 @@ class OllamaSampler(SamplerBase):
                 )
                 content = response["message"]["content"]
                 content = self._clean_think_tags(content)
+
                 if not content:
                     raise ValueError("Ollama API returned empty response; retrying")
                 return SamplerResponse(
