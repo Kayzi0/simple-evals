@@ -246,6 +246,9 @@ def _aggregate_get_clipped_mean(
     htmls = []
     convos = []
     metadata = []
+
+    # EXCLUDED_METRICS = {"total_retries", "avg_retries_per_rubric"}
+
     for single_eval_result in single_eval_results:
         for name, value in single_eval_result.metrics.items():
             name2values[name].append(value)
@@ -256,6 +259,12 @@ def _aggregate_get_clipped_mean(
         metadata.append(single_eval_result.example_level_metadata)
     final_metrics = {}
     for name, values in name2values.items():
+        if name == "total_retries":
+            final_metrics[name] = int(np.sum(values))
+            continue
+        if name == "avg_retries_per_rubric":
+            final_metrics[name] = float(np.mean(values))
+            continue
         for stat in ["mean", "n_samples", "bootstrap_std"]:
             key = name if stat == "mean" else f"{name}:{stat}"
             final_metrics[key] = _compute_clipped_stats(values, stat)
@@ -543,7 +552,7 @@ class HealthBenchEval(Eval):
             fn,
             self.examples,
             num_threads=self.n_threads,
-            pbar=True,
+            pbar=False,
         )
         final_metrics = _aggregate_get_clipped_mean(results)
         return final_metrics
