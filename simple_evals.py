@@ -250,11 +250,6 @@ def main():
             return
 
         grading_sampler = models[model_chosen]
-    # grading_sampler = ChatCompletionSampler(
-    #     model="gpt-4.1-2025-04-14",
-    #     system_message=OPENAI_SYSTEM_MESSAGE_API,
-    #     max_tokens=2048,
-    # )
 
     def get_evals(eval_name, debug_mode):
         num_examples = (
