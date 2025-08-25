@@ -61,7 +61,7 @@ def main():
 
     args = parser.parse_args()
 
-    models = {
+    available_models = {
         # Ollama Models
         "qwen3": OllamaSampler(model="qwen3:4b", max_tokens=2048),
         "llama3.2": OllamaSampler(model="llama3.2:1b", max_tokens=2048),
@@ -227,25 +227,27 @@ def main():
 
     if args.list_models:
         print("Available models:")
-        for model_name in models.keys():
+        for model_name in available_models.keys():
             print(f" - {model_name}")
         return
 
     if args.model:
         models_chosen = args.model.split(",")
+        print(models_chosen)
         for model_name in models_chosen:
-            if model_name not in models:
+            if model_name not in available_models:
                 print(f"Error: Model '{model_name}' not found.")
                 return
-        models = {model_name: models[model_name] for model_name in models_chosen}
+        models = {
+            model_name: available_models[model_name] for model_name in models_chosen
+        }
 
     print(f"Running with args {args}")
 
     if args.grader_model:
         model_chosen = args.grader_model
-
-        if model_chosen not in models:
-            print(f"Error: Model '{model_name}' not found.")
+        if model_chosen not in available_models:
+            print(f"Error: Model '{model_chosen}' not found.")
             return
 
         grading_sampler = models[model_chosen]
