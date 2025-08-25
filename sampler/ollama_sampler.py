@@ -25,6 +25,7 @@ class OllamaSampler(SamplerBase):
         self.system_message = system_message or OLLAMA_SYSTEM_MESSAGE_DEFAULT
         self.temperature = temperature
         self.max_tokens = max_tokens
+        self.client = ollama.Client()
 
     def _handle_text(self, text: str):
         return {"type": "text", "text": text}
@@ -42,9 +43,10 @@ class OllamaSampler(SamplerBase):
                 self._pack_message("system", self.system_message)
             ] + message_list
         trial = 0
-        while True:
+        MAX_RETRIES = 10
+        while trial < MAX_RETRIES:
             try:
-                response = ollama.chat(
+                response = self.client.chat(
                     model=self.model,
                     messages=message_list,
                     options={
@@ -71,3 +73,4 @@ class OllamaSampler(SamplerBase):
                 time.sleep(exception_backoff)
                 trial += 1
             # unknown error shall throw exception
+        raise RuntimeError(f"Ollama failed after {MAX_RETRIES} retries")
