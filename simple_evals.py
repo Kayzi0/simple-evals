@@ -35,7 +35,6 @@ def main():
     parser.add_argument(
         "--grader-model",
         type=str,
-        default="gpt-4.1",
         help="The model to use for grading.",
     )
     parser.add_argument(
