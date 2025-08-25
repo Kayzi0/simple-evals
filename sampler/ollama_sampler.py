@@ -65,12 +65,10 @@ class OllamaSampler(SamplerBase):
                     actual_queried_message_list=message_list,
                 )
             except Exception as e:
-                exception_backoff = 2**trial  # exponential back off
                 print(
-                    f"Exception, waiting and retrying {trial} after {exception_backoff} sec",
+                    f"Exception, retrying",
                     e,
                 )
-                time.sleep(exception_backoff)
                 trial += 1
             # unknown error shall throw exception
         raise RuntimeError(f"Ollama failed after {MAX_RETRIES} retries")
