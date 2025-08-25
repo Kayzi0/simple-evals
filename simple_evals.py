@@ -233,7 +233,6 @@ def main():
 
     if args.model:
         models_chosen = args.model.split(",")
-        print(models_chosen)
         for model_name in models_chosen:
             if model_name not in available_models:
                 print(f"Error: Model '{model_name}' not found.")
@@ -250,7 +249,7 @@ def main():
             print(f"Error: Model '{model_chosen}' not found.")
             return
 
-        grading_sampler = models[model_chosen]
+        grading_sampler = available_models[model_chosen]
     # grading_sampler = ChatCompletionSampler(
     #     model="gpt-4.1-2025-04-14",
     #     system_message=OPENAI_SYSTEM_MESSAGE_API,
