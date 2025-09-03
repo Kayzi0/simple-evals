@@ -2,7 +2,7 @@ import argparse
 import json
 import subprocess
 from datetime import datetime
-
+import uuid
 import pandas as pd
 import os
 from . import common
@@ -337,6 +337,9 @@ def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     tmp_dir = os.path.join(base_dir, "tmp")
     os.makedirs(tmp_dir, exist_ok=True)
+    run_id = uuid.uuid4().hex[:8]
+    run_dir = os.path.join(tmp_dir, f"{date_str}_{run_id}")
+    os.makedirs(run_dir, exist_ok=True)
 
     for model_name, sampler in models.items():
         for eval_name, eval_obj in evals.items():
@@ -345,7 +348,7 @@ def main():
             file_stem = f"{eval_name}_{model_name}"
             # file stem should also include the year, month, day, and time in hours and minutes
             file_stem += f"_{date_str}"
-            report_filename = os.path.join(tmp_dir, f"{file_stem}{debug_suffix}.html")
+            report_filename = os.path.join(run_dir, f"{file_stem}{debug_suffix}.html")
             print(f"Writing report to {report_filename}")
             with open(report_filename, "w", encoding="utf-8") as fh:
                 fh.write(common.make_report(result))
@@ -354,13 +357,13 @@ def main():
             # Sort metrics by key
             metrics = dict(sorted(metrics.items()))
             print(metrics)
-            result_filename = os.path.join(tmp_dir, f"{file_stem}{debug_suffix}.json")
+            result_filename = os.path.join(run_dir, f"{file_stem}{debug_suffix}.json")
             with open(result_filename, "w", encoding="utf-8") as f:
                 f.write(json.dumps(metrics, indent=2))
             print(f"Writing results to {result_filename}")
 
             full_result_filename = os.path.join(
-                tmp_dir, f"{file_stem}{debug_suffix}_allresults.json"
+                run_dir, f"{file_stem}{debug_suffix}_allresults.json"
             )
             with open(full_result_filename, "w", encoding="utf-8") as f:
                 result_dict = {
