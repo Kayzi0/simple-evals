@@ -300,8 +300,6 @@ def main():
         evals_list = args.eval.split(",")
         evals = {}
         for eval_name in evals_list:
-            evals[eval_name] = get_evals(eval_name, args.debug)
-
             try:
                 evals[eval_name] = get_evals(eval_name, args.debug)
             except Exception:
