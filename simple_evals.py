@@ -35,7 +35,7 @@ def main():
     parser.add_argument(
         "--grader-model",
         type=str,
-        help="The model to use for grading.",
+        help="Comma-separated list of models to use for grading.",
     )
     parser.add_argument(
         "--eval",
@@ -243,20 +243,22 @@ def main():
 
     print(f"Running with args {args}")
 
+    grading_samplers = []
     if args.grader_model:
-        model_chosen = args.grader_model
-        if model_chosen not in available_models:
-            print(f"Error: Model '{model_chosen}' not found.")
-            return
+        graders_chosen = args.grader_model.split(",")
+        for grader_name in graders_chosen:
+            if grader_name not in available_models:
+                print(f"Error: Grader model '{grader_name}' not found.")
+                return
+            grading_samplers.append((grader_name, available_models[grader_name]))
 
-        grading_sampler = available_models[model_chosen]
     # grading_sampler = ChatCompletionSampler(
     #     model="gpt-4.1-2025-04-14",
     #     system_message=OPENAI_SYSTEM_MESSAGE_API,
     #     max_tokens=2048,
     # )
 
-    def get_evals(eval_name, debug_mode):
+    def get_evals(eval_name, debug_mode, grading_sampler):
         num_examples = (
             args.examples if args.examples is not None else (5 if debug_mode else None)
         )
@@ -300,21 +302,27 @@ def main():
         evals_list = args.eval.split(",")
         evals = {}
         for eval_name in evals_list:
-            try:
-                evals[eval_name] = get_evals(eval_name, args.debug)
-            except Exception:
-                print(f"Error: eval '{eval_name}' not found.")
-                return
+            for grader_name, grading_sampler in grading_samplers:
+                try:
+                    evals[f"{eval_name}_grader-{grader_name}"] = get_evals(
+                        eval_name, args.debug, grading_sampler
+                    )
+                except Exception:
+                    print(f"Error: eval '{eval_name}' not found.")
+                    return
+
     else:
-        evals = {
-            eval_name: get_evals(eval_name, args.debug)
-            for eval_name in [
-                "healthbench",
-                "healthbench_hard",
-                "healthbench_consensus",
-                "healthbench_meta",
-            ]
-        }
+        evals = {}
+        for eval_name in [
+            "healthbench",
+            "healthbench_hard",
+            "healthbench_consensus",
+            "healthbench_meta",
+        ]:
+            for grader_name, grading_sampler in grading_samplers:
+                evals[f"{eval_name}_grader-{grader_name}"] = get_evals(
+                    eval_name, args.debug, grading_sampler
+                )
 
     print(evals)
     debug_suffix = "_DEBUG" if args.debug else ""
