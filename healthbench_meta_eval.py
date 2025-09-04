@@ -36,7 +36,6 @@ HEALTHBENCH_META_HTML_JINJA = (
 class HealthBenchMetaEval(Eval):
     def __init__(
         self,
-        grader_model: SamplerBase,
         num_examples: int | None = None,
         n_threads: int = 120,
         n_repeats: int = 1,
@@ -51,7 +50,6 @@ class HealthBenchMetaEval(Eval):
             examples = rng.sample(examples, num_examples)
 
         self.examples = examples * n_repeats
-        self.grader_model = grader_model
         self.n_threads = n_threads
 
     def grade_sample(
