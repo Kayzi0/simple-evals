@@ -475,6 +475,17 @@ class HealthBenchEval(Eval):
                     **rubric_item.to_dict(),
                     "criteria_met": criteria_met,
                     "explanation": explanation,
+                    # Add ensemble details if available
+                    "ensemble_votes": (
+                        grading_response.get("ensemble_votes")
+                        if "ensemble_votes" in grading_response
+                        else None
+                    ),
+                    "ensemble_raw_responses": (
+                        grading_response.get("ensemble_raw_responses")
+                        if "ensemble_raw_responses" in grading_response
+                        else None
+                    ),
                 }
             )
 
@@ -545,6 +556,17 @@ class HealthBenchEval(Eval):
                     "completion_id": hashlib.sha256(
                         (row["prompt_id"] + response_text).encode("utf-8")
                     ).hexdigest(),
+                    # Extra fields for ensemble grading
+                    "ensemble_votes": (
+                        sampler_response.response_metadata.get("votes")
+                        if "votes" in sampler_response.response_metadata
+                        else None
+                    ),
+                    "ensemble_raw_responses": (
+                        sampler_response.response_metadata.get("raw_responses")
+                        if "raw_responses" in sampler_response.response_metadata
+                        else None
+                    ),
                 },
             )
 

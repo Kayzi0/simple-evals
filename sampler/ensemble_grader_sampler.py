@@ -41,10 +41,15 @@ class EnsembleGraderSampler(SamplerBase):
         result_json = {
             "criteria_met": majority,
             "explanation": explanation,
+            "ensemble_votes": votes,
+            "ensemble_raw_responses": responses,
         }
 
         return SamplerResponse(
             response_text=json.dumps(result_json),
-            response_metadata={"votes": votes, "raw_responses": responses},
+            response_metadata={
+                "votes": votes,  # list of True/False per grader
+                "raw_responses": responses,  # parsed dicts from graders
+            },
             actual_queried_message_list=message_list,
         )
