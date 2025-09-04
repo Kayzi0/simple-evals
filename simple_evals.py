@@ -9,7 +9,7 @@ from . import common
 
 from .healthbench_eval import HealthBenchEval
 from .healthbench_meta_eval import HealthBenchMetaEval
-
+from .sampler.ensemble_grader_sampler import EnsembleGraderSampler
 from .sampler.chat_completion_sampler import (
     OPENAI_SYSTEM_MESSAGE_API,
     OPENAI_SYSTEM_MESSAGE_CHATGPT,
@@ -244,20 +244,22 @@ def main():
 
     print(f"Running with args {args}")
 
-    grading_samplers = []
+    grading_sampler = None
     if args.grader_model:
         graders_chosen = args.grader_model.split(",")
-        for grader_name in graders_chosen:
-            if grader_name not in available_models:
-                print(f"Error: Grader model '{grader_name}' not found.")
-                return
-            grading_samplers.append((grader_name, available_models[grader_name]))
+        invalid = [g for g in graders_chosen if g not in available_models]
+        if invalid:
+            print(f"Error: Grader model(s) {invalid} not found.")
+            return
 
-    # grading_sampler = ChatCompletionSampler(
-    #     model="gpt-4.1-2025-04-14",
-    #     system_message=OPENAI_SYSTEM_MESSAGE_API,
-    #     max_tokens=2048,
-    # )
+        grader_samplers = [available_models[g] for g in graders_chosen]
+
+        if len(grader_samplers) == 1:
+            grading_sampler = grader_samplers[0]
+            grader_label = graders_chosen[0]
+        else:
+            grading_sampler = EnsembleGraderSampler(grader_samplers)
+            grader_label = "ensemble_" + "-".join(graders_chosen)
 
     def get_evals(eval_name, debug_mode, grading_sampler):
         num_examples = (
@@ -303,27 +305,21 @@ def main():
         evals_list = args.eval.split(",")
         evals = {}
         for eval_name in evals_list:
-            for grader_name, grading_sampler in grading_samplers:
-                try:
-                    evals[f"{eval_name}_grader-{grader_name}"] = get_evals(
-                        eval_name, args.debug, grading_sampler
-                    )
-                except Exception:
-                    print(f"Error: eval '{eval_name}' not found.")
-                    return
-
+            try:
+                evals[eval_name] = get_evals(eval_name, args.debug, grading_sampler)
+            except Exception:
+                print(f"Error: eval '{eval_name}' not found.")
+                return
     else:
-        evals = {}
-        for eval_name in [
-            "healthbench",
-            "healthbench_hard",
-            "healthbench_consensus",
-            "healthbench_meta",
-        ]:
-            for grader_name, grading_sampler in grading_samplers:
-                evals[f"{eval_name}_grader-{grader_name}"] = get_evals(
-                    eval_name, args.debug, grading_sampler
-                )
+        evals = {
+            eval_name: get_evals(eval_name, args.debug, grading_sampler)
+            for eval_name in [
+                "healthbench",
+                "healthbench_hard",
+                "healthbench_consensus",
+                "healthbench_meta",
+            ]
+        }
 
     print(evals)
     debug_suffix = "_DEBUG" if args.debug else ""
@@ -331,7 +327,7 @@ def main():
     mergekey2resultpath = {}
     print(f"Running the following evals: {list(evals.keys())}")
     print(f"Running evals for the following models: {list(models.keys())}")
-
+    print(f"Using grader: {grader_label}")
     now = datetime.now()
     date_str = now.strftime("%Y%m%d_%H%M%S")
 
@@ -346,7 +342,7 @@ def main():
         for eval_name, eval_obj in evals.items():
             result = eval_obj(sampler)
             # ^^^ how to use a sampler
-            file_stem = f"{eval_name}_{model_name}"
+            file_stem = f"{eval_name}_{model_name}_grader-{grader_label}"
             # file stem should also include the year, month, day, and time in hours and minutes
             file_stem += f"_{date_str}"
             report_filename = os.path.join(run_dir, f"{file_stem}{debug_suffix}.html")

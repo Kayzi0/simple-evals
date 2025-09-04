@@ -1,5 +1,15 @@
 import json
 from ..types_eval import MessageList, SamplerBase, SamplerResponse
+import re
+
+
+def _clean_json(json_string: str) -> dict:
+    # Strip markdown fences if present
+    json_cleaned = re.sub(r"^```json\s*|\s*```$", "", json_string.strip())
+    try:
+        return json.loads(json_cleaned)
+    except Exception:
+        return {"criteria_met": False, "explanation": "Parse error"}
 
 
 class EnsembleGraderSampler(SamplerBase):
@@ -15,7 +25,7 @@ class EnsembleGraderSampler(SamplerBase):
         for grader in self.graders:
             resp = grader(message_list)
             try:
-                parsed = json.loads(resp.response_text)
+                parsed = _clean_json(resp.response_text)
             except Exception:
                 parsed = {"criteria_met": False, "explanation": "Parse error"}
             responses.append(parsed)
