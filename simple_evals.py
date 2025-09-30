@@ -63,7 +63,8 @@ def main():
 
     available_models = {
         # Ollama Models
-        "qwen3": OllamaSampler(model="qwen3:4b", max_tokens=2048),
+        "qwen3:4b": OllamaSampler(model="qwen3:4b", max_tokens=2048),
+        "qwen3:8b": OllamaSampler(model="qwen3:8b", max_tokens=2048),
         "llama3.2": OllamaSampler(model="llama3.2:1b", max_tokens=2048),
         "gemma3": OllamaSampler(model="gemma3:latest", max_tokens=2048),
         # Reasoning Models
