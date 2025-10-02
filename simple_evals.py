@@ -69,6 +69,8 @@ def main():
         "llama3.1": OllamaSampler(model="llama3.1:8b", max_tokens=2048),
         "gemma3": OllamaSampler(model="gemma3:latest", max_tokens=2048),
         "gemma3:27b": OllamaSampler(model="gemma3:27b", max_tokens=2048),
+        "medgemma:4b": OllamaSampler(model="medgemma:4b", max_tokens=2048),
+        "medgemma:27b": OllamaSampler(model="medgemma:27b", max_tokens=2048),
         # Reasoning Models
         "o3": ResponsesSampler(
             model="o3-2025-04-16",
