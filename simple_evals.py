@@ -35,6 +35,7 @@ def main():
     parser.add_argument(
         "--grader-model",
         type=str,
+        default=None,
         help="Comma-separated list of models to use for grading.",
     )
     parser.add_argument(
