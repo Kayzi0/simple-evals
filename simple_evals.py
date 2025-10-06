@@ -64,14 +64,14 @@ def main():
 
     available_models = {
         # Ollama Models
-        "qwen3:4b": OllamaSampler(model="qwen3:4b", max_tokens=2048),
-        "qwen3:8b": OllamaSampler(model="qwen3:8b", max_tokens=2048),
+        "qwen34b": OllamaSampler(model="qwen3:4b", max_tokens=2048),
+        "qwen38b": OllamaSampler(model="qwen3:8b", max_tokens=2048),
         "llama3.2": OllamaSampler(model="llama3.2:1b", max_tokens=2048),
         "llama3.1": OllamaSampler(model="llama3.1:8b", max_tokens=2048),
         "gemma3": OllamaSampler(model="gemma3:latest", max_tokens=2048),
-        "gemma3:27b": OllamaSampler(model="gemma3:27b", max_tokens=2048),
-        "medgemma:4b": OllamaSampler(model="alibayram/medgemma:4b", max_tokens=2048),
-        "medgemma:27b": OllamaSampler(model="alibayram/medgemma:27b", max_tokens=2048),
+        "gemma327b": OllamaSampler(model="gemma3:27b", max_tokens=2048),
+        "medgemma4b": OllamaSampler(model="alibayram/medgemma:4b", max_tokens=2048),
+        "medgemma27b": OllamaSampler(model="alibayram/medgemma:27b", max_tokens=2048),
         # Reasoning Models
         "o3": ResponsesSampler(
             model="o3-2025-04-16",
@@ -244,9 +244,21 @@ def main():
             if model_name not in available_models:
                 print(f"Error: Model '{model_name}' not found.")
                 return
-        models = {
-            model_name: available_models[model_name] for model_name in models_chosen
-        }
+
+        if args.eval == "healthbench_meta":
+            if len(models_chosen) == 1:
+                models = {model_name: available_models[models_chosen[0]]}
+            else:
+                models_list = [
+                    available_models[model_name] for model_name in models_chosen
+                ]
+                ensemble_sampler = EnsembleGraderSampler(models_list)
+                ensemble_name = "-".join(models_chosen)
+                models = {ensemble_name: ensemble_sampler}
+        else:
+            models = {
+                model_name: available_models[model_name] for model_name in models_chosen
+            }
 
     print(f"Running with args {args}")
 
@@ -259,7 +271,6 @@ def main():
             return
 
         grader_samplers = [available_models[g] for g in graders_chosen]
-
         if len(grader_samplers) == 1:
             grading_sampler = grader_samplers[0]
             grader_label = graders_chosen[0]
@@ -299,7 +310,6 @@ def main():
                 )
             case "healthbench_meta":
                 return HealthBenchMetaEval(
-                    grader_model=grading_sampler,
                     num_examples=10 if debug_mode else num_examples,
                     n_repeats=args.n_repeats or 1,
                     n_threads=args.n_threads or 1,
@@ -333,7 +343,8 @@ def main():
     mergekey2resultpath = {}
     print(f"Running the following evals: {list(evals.keys())}")
     print(f"Running evals for the following models: {list(models.keys())}")
-    print(f"Using grader: {grader_label}")
+    if args.grader_model:
+        print(f"Using grader: {grader_label}")
     now = datetime.now()
     date_str = now.strftime("%Y%m%d_%H%M%S")
 
@@ -348,7 +359,10 @@ def main():
         for eval_name, eval_obj in evals.items():
             result = eval_obj(sampler)
             # ^^^ how to use a sampler
-            file_stem = f"{eval_name}_{model_name}_grader-{grader_label}"
+            if args.grader_model:
+                file_stem = f"{eval_name}_{model_name}_grader-{grader_label}"
+            else:
+                file_stem = f"{eval_name}_{model_name}"
             # file stem should also include the year, month, day, and time in hours and minutes
             file_stem += f"_{date_str}"
             report_filename = os.path.join(run_dir, f"{file_stem}{debug_suffix}.html")
